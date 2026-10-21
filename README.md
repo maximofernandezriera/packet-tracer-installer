@@ -9,8 +9,18 @@ Google Drive, no hace falta cuenta de Cisco ni descargas manuales.
 
 ### 1. Descargar el script
 
+Con `wget` (recomendado, no hace falta instalar nada más):
+
 ```bash
 wget https://raw.githubusercontent.com/maximofernandezriera/packet-tracer-installer/main/install_packet_tracer.sh
+```
+
+O clonando el repositorio con `git` (si no lo tienes instalado:
+`sudo apt update && sudo apt install -y git`):
+
+```bash
+git clone https://github.com/maximofernandezriera/packet-tracer-installer.git
+cd packet-tracer-installer
 ```
 
 ### 2. Dar permiso de ejecución
