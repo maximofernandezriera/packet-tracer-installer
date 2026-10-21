@@ -9,9 +9,8 @@
 # Uso:
 #   ./install_packet_tracer.sh [ruta/al/Packet_Tracer.deb | URL]
 #
-# Acepta también una URL (p.ej. un enlace compartido de Google Drive) y la
-# descarga. Si no se indica nada, busca el .deb en ~/Descargas y ~/Downloads.
-# El .deb se descarga manualmente desde https://www.netacad.com (requiere sesión).
+# Sin argumentos: busca el .deb en ~/Descargas, ~/Downloads y el directorio
+# actual; si no lo encuentra, lo descarga de la URL por defecto (Google Drive).
 #
 set -euo pipefail
 
@@ -39,7 +38,19 @@ fi
 SUDO_USER_HOME="$(eval echo "~${SUDO_USER:-$USER}")"
 
 # ---------- Localizar el .deb ----------
+# URL por defecto (Google Drive). Se puede sobreescribir pasando una ruta
+# a un .deb local o cualquier otra URL como primer argumento.
+DEFAULT_URL="https://drive.google.com/file/d/1PvaKuf_iB6eLeUu5AjqW01pIeUFFyNEY/view"
 DEB_PATH="${1:-}"
+
+# Sin argumentos: primero buscar un .deb ya descargado; si no hay, descargar.
+if [[ -z "$DEB_PATH" ]]; then
+    for dir in "$SUDO_USER_HOME/Descargas" "$SUDO_USER_HOME/Downloads" "$PWD"; do
+        found="$(find "$dir" -maxdepth 1 \( -iname 'Packet_Tracer*.deb' -o -iname 'PacketTracer*.deb' -o -iname 'CiscoPacketTracer*.deb' \) 2>/dev/null | sort -V | tail -n1 || true)"
+        if [[ -n "$found" ]]; then DEB_PATH="$found"; break; fi
+    done
+    [[ -z "$DEB_PATH" ]] && DEB_PATH="$DEFAULT_URL"
+fi
 
 # Si el argumento es una URL (Drive genérico o enlace directo), descargarlo.
 if [[ "$DEB_PATH" =~ ^https?:// ]]; then
@@ -57,17 +68,10 @@ if [[ "$DEB_PATH" =~ ^https?:// ]]; then
     DEB_PATH="$DEST"
 fi
 
-if [[ -z "$DEB_PATH" ]]; then
-    for dir in "$SUDO_USER_HOME/Descargas" "$SUDO_USER_HOME/Downloads" "$PWD"; do
-        found="$(find "$dir" -maxdepth 1 \( -iname 'Packet_Tracer*.deb' -o -iname 'PacketTracer*.deb' -o -iname 'CiscoPacketTracer*.deb' \) 2>/dev/null | sort -V | tail -n1)"
-        if [[ -n "$found" ]]; then DEB_PATH="$found"; break; fi
-    done
-fi
-
 if [[ -z "$DEB_PATH" || ! -f "$DEB_PATH" ]]; then
-    err "No se encontró el .deb de Packet Tracer."
-    echo "Descárgalo desde https://www.netacad.com -> Packet Tracer -> Linux (Ubuntu 64-bit)"
-    echo "y ejecuta:  $0 /ruta/al/paquete.deb"
+    err "No se encontró ni pudo descargar el .deb de Packet Tracer."
+    echo "Descárgalo de netacad.com (requiere sesión) o pasa la ruta/URL como argumento:"
+    echo "  $0 /ruta/al/paquete.deb"
     exit 1
 fi
 log "Paquete: $DEB_PATH"
